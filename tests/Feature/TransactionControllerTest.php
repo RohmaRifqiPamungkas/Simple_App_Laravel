@@ -29,7 +29,7 @@ class TransactionControllerTest extends TestCase
         // Seed some transaction data
         Transaction::factory()->count(5)->create();
 
-        $response = $this->actingAs($user)->get(route('transactions.all'));
+        $response = $this->actingAs($user)->get(route('transactions.index'));
 
         $response->assertStatus(200);
         $response->assertSee('Transactions');
@@ -41,7 +41,7 @@ class TransactionControllerTest extends TestCase
         /** @var \App\Models\User $user */
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('transactions.add'));
+        $response = $this->actingAs($user)->get(route('transactions.create'));
 
         $response->assertStatus(200);
         $response->assertSee('Create Transaction');
@@ -68,7 +68,7 @@ class TransactionControllerTest extends TestCase
         $response = $this->actingAs($user)->post(route('transactions.store'), $transactionData);
 
         $response->assertStatus(302); // Redirection status
-        $response->assertRedirect(route('transactions.all'));
+        $response->assertRedirect(route('transactions.index'));
 
         $this->assertDatabaseHas('transactions', [
             'code' => 'TR123456',

@@ -1,6 +1,6 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-full mx-auto sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
@@ -35,11 +35,11 @@
 
                             <x-slot name="content">
                                 <!-- All Transactions -->
-                                <x-dropdown-link href="{{ route('transactions.all') }}">
+                                <x-dropdown-link href="{{ route('transactions.index') }}">
                                     {{ __('All Transactions') }}
                                 </x-dropdown-link>
                                 <!-- Add Transaction -->
-                                <x-dropdown-link href="{{ route('transactions.add') }}">
+                                <x-dropdown-link href="{{ route('transactions.create') }}">
                                     {{ __('Add Transaction') }}
                                 </x-dropdown-link>
                                 <!-- Transaction Recap -->
