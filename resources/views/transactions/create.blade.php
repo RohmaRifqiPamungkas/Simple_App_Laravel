@@ -1,67 +1,86 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Create Transaction') }}
+            {{ __('Input Data Transaksi') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-xl sm:rounded-lg p-6">
                 <form id="transaction-form" action="{{ route('transactions.store') }}" method="POST">
                     @csrf
-                    <div class="grid grid-cols-1 gap-6 mt-4 sm:grid-cols-2">
+
+                    <!-- Header Transaksi -->
+                    <div class="grid grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label class="text-gray-700" for="description">Description</label>
+                            <label class="block text-gray-700" for="description">Deskripsi</label>
                             <textarea id="description" name="description" class="form-input rounded-md shadow-sm mt-1 block w-full"
-                                placeholder="Type your message here."></textarea>
+                                placeholder="Transaksi Bulan Agustus"></textarea>
                         </div>
                         <div>
-                            <label class="text-gray-700" for="code">Code</label>
+                            <label class="block text-gray-700" for="code">Kode</label>
                             <input id="code" name="code" type="text"
-                                class="form-input rounded-md shadow-sm mt-1 block w-full" required>
+                                class="form-input rounded-md shadow-sm mt-1 block w-full" placeholder="123456">
                         </div>
                         <div>
-                            <label class="text-gray-700" for="rate">Rate Euro</label>
+                            <label class="block text-gray-700" for="rate">Rate Euro</label>
                             <input id="rate" name="rate" type="number" step="0.01"
-                                class="form-input rounded-md shadow-sm mt-1 block w-full" required>
+                                class="form-input rounded-md shadow-sm mt-1 block w-full" placeholder="15.000">
                         </div>
                         <div>
-                            <label class="text-gray-700" for="date_paid">Date Paid</label>
+                            <label class="block text-gray-700" for="date_paid">Tanggal Bayar</label>
                             <input id="date_paid" name="date_paid" type="date"
                                 class="form-input rounded-md shadow-sm mt-1 block w-full">
                         </div>
-                        <div>
-                            <label class="text-gray-700" for="category">Category</label>
-                            <select id="category" name="category"
-                                class="form-select rounded-md shadow-sm mt-1 block w-full">
-                                <option value="Income">Income</option>
-                                <option value="Expense">Expense</option>
+                    </div>
+
+                    <!-- Detail Transaksi -->
+                    <div id="details-container">
+                        <div class="mb-4 p-4 border rounded-lg detail-template" style="display: none;">
+                            <div class="flex justify-between items-center mb-4">
+                                <label class="block text-gray-700">Kategori</label>
+                                <button type="button" class="remove-category text-red-600">✖</button>
+                            </div>
+                            <select name="details[0][category]"
+                                class="form-select rounded-md shadow-sm block w-full mb-4 category-select">
+                                @if ($categories->isEmpty())
+                                    <option value="Income">Income</option>
+                                    <option value="Expense">Expense</option>
+                                @else
+                                    @foreach ($categories as $cat)
+                                        <option value="{{ $cat->name }}">{{ $cat->name }}</option>
+                                    @endforeach
+                                @endif
                             </select>
+                            <div class="grid grid-cols-4 gap-4 items-center mb-2">
+                                <label class="block text-gray-700 col-span-2">Nama Transaksi</label>
+                                <label class="block text-gray-700 col-span-2">Nominal (IDR)</label>
+                            </div>
+                            <div class="grid grid-cols-4 gap-4 mb-3">
+                                <input type="text" name="details[0][name]"
+                                    class="form-input rounded-md shadow-sm col-span-2"
+                                    placeholder="Contoh: Mobil Agustus">
+                                <input type="number" name="details[0][amount]"
+                                    class="form-input rounded-md shadow-sm col-span-1" placeholder="800.000">
+                                <button type="button" class="add-transaction text-blue-600 col-span-1">+</button>
+                            </div>
                         </div>
+                        <button type="button"
+                            class="add-category bg-blue-500 text-white px-4 py-2 rounded-md mt-4">Tambah
+                            Kategori</button>
                     </div>
 
-                    <div class="mt-4">
-                        <h3 class="text-lg font-medium">Transaction Details</h3>
-                        <div id="details" class="mb-4">
-                        
-                        </div>
-                        <div id="preview-list" class="mt-4">
-                            <h4 class="text-lg font-medium">Preview of Added Transactions</h4>
-                            <!-- Pratinjau yang ditambahkan akan muncul di sini -->
-                        </div>
-                        <button type="button" id="add-detail-btn"
-                            class="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded">+ Add Transaction Detail</button>
-                        <div class="mt-4">
-                            <label class="text-gray-700">Total:</label>
-                            <span id="total-amount" class="block mt-1 text-gray-900">0</span>
-                        </div>
+                    <!-- Preview List -->
+                    <div id="preview-list" class="mt-8 mb-4 p-4 border rounded-lg">
+                        <h4 class="text-lg font-medium">Pratinjau Transaksi Ditambahkan</h4>
+                        <!-- Transaksi yang ditambahkan akan muncul di sini -->
                     </div>
 
+                    <!-- Tombol Simpan dan Batal -->
                     <div class="mt-6 flex justify-end">
-                        <button type="reset" class="px-4 py-2 bg-red-600 text-white rounded-md">Cancel</button>
-                        <button type="submit" class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md">Save
-                            Transaction</button>
+                        <button type="reset" class="bg-red-600 text-white px-4 py-2 rounded-md">Batal</button>
+                        <button type="submit" class="ml-4 bg-blue-600 text-white px-4 py-2 rounded-md">Simpan</button>
                     </div>
                 </form>
             </div>
@@ -69,92 +88,53 @@
     </div>
 
     <script>
-        let detailIndex = 0;
+        document.addEventListener('DOMContentLoaded', function() {
+            const detailsContainer = document.getElementById('details-container');
+            const detailTemplate = document.querySelector('.detail-template');
+            const previewList = document.getElementById('preview-list');
 
-        document.getElementById('add-detail-btn').addEventListener('click', function() {
-            detailIndex++;
-            const details = document.getElementById('details');
-            const detailTemplate = `
-            <div class="detail bg-gray-100 p-4 mb-4 rounded-md" data-index="${detailIndex}">
-                <h4>Category #${detailIndex}</h4>
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                    <div>
-                        <label class="text-gray-700" for="details[${detailIndex}][name]">Name</label>
-                        <input id="details[${detailIndex}][name]" name="details[${detailIndex}][name]" type="text"
-                            class="form-input rounded-md shadow-sm mt-1 block w-full">
-                    </div>
-                    <div>
-                        <label class="text-gray-700" for="details[${detailIndex}][amount]">Amount</label>
-                        <input id="details[${detailIndex}][amount]" name="details[${detailIndex}][amount]" type="number"
-                            step="0.01" class="form-input rounded-md shadow-sm mt-1 block w-full" value="0">
-                    </div>
-                    <div class="flex items-end">
-                        <button type="button"
-                            class="add-detail ml-2 px-3 py-2 mb-1 bg-black text-white rounded-md">+</button>
-                        <button type="button" class="remove-detail ml-2 px-2 py-1 mb-1 bg-red-600 text-white rounded-md">✖</button>
-                    </div>
-                </div>
-            </div>
-            `;
-            details.insertAdjacentHTML('beforeend', detailTemplate);
-        });
-
-        document.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('add-detail')) {
-                const detailContainer = e.target.closest('.detail');
-                const nameInput = detailContainer.querySelector('input[type="text"]');
-                const amountInput = detailContainer.querySelector('input[type="number"]');
-
-                if (nameInput.value && amountInput.value > 0) {
-                    const amount = parseFloat(amountInput.value);
-                    let total = parseFloat(document.getElementById('total-amount').textContent) || 0;
-                    total += amount;
-                    document.getElementById('total-amount').textContent = total.toFixed(2);
-
-                    // Add to preview list
-                    const previewList = document.getElementById('preview-list');
-                    const previewItem = document.createElement('div');
-                    previewItem.className =
-                        'preview-item bg-gray-200 p-3 mb-2 rounded-md flex justify-between items-center';
-                    previewItem.innerHTML = `
-                        <span>${nameInput.value} - €${amount.toFixed(2)}</span>
-                        <button type="button" class="delete-preview-item px-2 py-1 bg-red-600 text-white rounded-md">Delete</button>
-                    `;
-                    previewList.appendChild(previewItem);
-
-                    // Reset inputs
-                    nameInput.value = '';
-                    amountInput.value = '0';
-                }
-            }
-
-            if (e.target && e.target.classList.contains('remove-detail')) {
-                const detailContainer = e.target.closest('.detail');
-                detailContainer.remove();
-                updateTotal();
-            }
-
-            if (e.target && e.target.classList.contains('delete-preview-item')) {
-                const previewItem = e.target.closest('.preview-item');
-                const amountText = previewItem.querySelector('span').textContent.split('€')[1];
-                const amount = parseFloat(amountText);
-
-                // Deduct amount from total
-                let total = parseFloat(document.getElementById('total-amount').textContent);
-                total -= amount;
-                document.getElementById('total-amount').textContent = total.toFixed(2);
-
-                // Remove preview item
-                previewItem.remove();
-            }
-        });
-
-        function updateTotal() {
-            let total = 0;
-            document.querySelectorAll('input[name*="amount"]').forEach(function(input) {
-                total += parseFloat(input.value) || 0;
+            document.querySelector('.add-category').addEventListener('click', function() {
+                const newDetail = detailTemplate.cloneNode(true);
+                newDetail.style.display = 'block';
+                newDetail.classList.remove('detail-template');
+                detailsContainer.insertBefore(newDetail, this);
             });
-            document.getElementById('total-amount').textContent = total.toFixed(2);
-        }
+
+            detailsContainer.addEventListener('click', function(event) {
+                if (event.target.classList.contains('remove-category')) {
+                    const detail = event.target.closest('.mb-4');
+                    detail.remove();
+                }
+
+                if (event.target.classList.contains('add-transaction')) {
+                    const detail = event.target.closest('.mb-4');
+                    const nameInput = detail.querySelector('input[name="details[0][name]"]');
+                    const amountInput = detail.querySelector('input[name="details[0][amount]"]');
+                    const categorySelect = detail.querySelector('.category-select');
+
+                    if (nameInput.value && amountInput.value) {
+                        const amount = parseFloat(amountInput.value);
+                        const previewItem = document.createElement('div');
+                        previewItem.className =
+                            'preview-item bg-gray-100 p-2 mb-2 rounded-md flex justify-between items-center';
+                        previewItem.innerHTML = `
+                            <span>${categorySelect.value}: ${nameInput.value} - IDR ${amount.toFixed(2)}</span>
+                            <button type="button" class="delete-preview-item text-red-600">✖</button>
+                        `;
+                        previewList.appendChild(previewItem);
+
+                        nameInput.value = '';
+                        amountInput.value = '';
+                    }
+                }
+            });
+
+            previewList.addEventListener('click', function(event) {
+                if (event.target.classList.contains('delete-preview-item')) {
+                    const previewItem = event.target.closest('.preview-item');
+                    previewItem.remove();
+                }
+            });
+        });
     </script>
 </x-app-layout>

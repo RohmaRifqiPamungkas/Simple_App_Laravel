@@ -5,11 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Transaction extends Model
+class MsCategory extends Model
 {
-    use HasFactory;
-
-    protected $fillable = ['code', 'description', 'rate', 'date_paid'];
+    protected $fillable = ['name'];
 
     public function details()
     {
