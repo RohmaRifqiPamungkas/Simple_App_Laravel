@@ -16,6 +16,6 @@ class TransactionDetail extends Model
 
     public function category()
     {
-        return $this->belongsTo(MsCategory::class);
+        return $this->belongsTo(MsCategory::class, 'transaction_category_id');
     }
 }

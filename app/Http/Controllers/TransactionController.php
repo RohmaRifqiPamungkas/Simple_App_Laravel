@@ -12,7 +12,7 @@ class TransactionController extends Controller
     public function index()
     {
         // Mendapatkan semua transaksi dengan detailnya
-        $transactions = TransactionHeader::with('details')->get();
+        $transactions = TransactionHeader::with('details.category')->get();
         return view('transactions.index', compact('transactions'));
     }
     public function create()
