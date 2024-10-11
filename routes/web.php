@@ -12,17 +12,16 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
+    // Dashboard Route
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 
-    // Transactions Routes
-    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
-    Route::get('/transactions/add', [TransactionController::class, 'create'])->name('transactions.create');
-    Route::post('/transactions/store', [TransactionController::class, 'store'])->name('transactions.store');
-    Route::get('/transactions/edit/{transaction}', [TransactionController::class, 'edit'])->name('transactions.edit');
-    Route::put('/transactions/update/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
-    Route::delete('/transactions/delete/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
-    Route::get('/transactions/recap', [TransactionController::class, 'recap'])->name('transactions.recap');
+    // Transactions Routes - Using Route Resource
+    Route::resource('transactions', TransactionController::class)->except(['show']);
     
+    // Additional Route for Recap
+    Route::get('/transactions/recap', [TransactionController::class, 'recap'])->name('transactions.recap');
+    Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
+
 });

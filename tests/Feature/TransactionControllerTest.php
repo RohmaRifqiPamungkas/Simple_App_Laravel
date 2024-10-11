@@ -2,11 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\Transaction;
+use App\Models\TransactionHeader; // Ganti dengan model yang sesuai
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use App\Models\MsCategory;
 
 class TransactionControllerTest extends TestCase
 {
@@ -15,9 +16,7 @@ class TransactionControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Seed the database or prepare necessary data
-        $this->artisan('migrate');
+        $this->artisan('migrate'); // Jalankan migrasi sebelum setiap pengujian
     }
 
     #[Test]
@@ -27,7 +26,7 @@ class TransactionControllerTest extends TestCase
         $user = User::factory()->create();
 
         // Seed some transaction data
-        Transaction::factory()->count(5)->create();
+        TransactionHeader::factory()->count(5)->create(); // Ganti dengan model yang sesuai
 
         $response = $this->actingAs($user)->get(route('transactions.index'));
 
@@ -53,39 +52,61 @@ class TransactionControllerTest extends TestCase
         /** @var \App\Models\User $user */
         $user = User::factory()->create();
 
+        // Siapkan kategori untuk digunakan
+        $category = MsCategory::factory()->create(['name' => 'Category 1']); // Membuat kategori
+
         $transactionData = [
             'code' => 'TR123456',
             'description' => 'Sample transaction',
-            'rate' => 100.00,
+            'rate_euro' => 100.00,
             'date_paid' => '2023-10-10',
-            'category' => 'Income', // Tambahan field category
             'details' => [
-                ['name' => 'Detail 1', 'amount' => 50.00],
-                ['name' => 'Detail 2', 'amount' => 50.00],
+                ['category' => $category->id, 'name' => 'Detail 1', 'amount' => 50.00],
+                ['category' => $category->id, 'name' => 'Detail 2', 'amount' => 50.00],
             ]
         ];
 
         $response = $this->actingAs($user)->post(route('transactions.store'), $transactionData);
 
-        $response->assertStatus(302); // Redirection status
+        $response->assertStatus(302); // Status redirect
         $response->assertRedirect(route('transactions.index'));
 
-        $this->assertDatabaseHas('transactions', [
+        // Memastikan data disimpan di database
+        $this->assertDatabaseHas('transaction_headers', [
             'code' => 'TR123456',
             'description' => 'Sample transaction',
-            'rate' => 100.00,
+            'rate_euro' => 100.00,
             'date_paid' => '2023-10-10',
-            'category' => 'Income', // Pastikan field category dicek
         ]);
 
         $this->assertDatabaseHas('transaction_details', [
             'name' => 'Detail 1',
-            'amount' => 50.00,
+            'value_idr' => 50.00,
+            'transaction_category_id' => $category->id,
         ]);
 
         $this->assertDatabaseHas('transaction_details', [
             'name' => 'Detail 2',
-            'amount' => 50.00,
+            'value_idr' => 50.00,
+            'transaction_category_id' => $category->id,
+        ]);
+    }
+
+    #[Test]
+    public function it_can_delete_a_transaction()
+    {
+        /** @var \App\Models\User $user */
+        $user = User::factory()->create();
+        $transaction = TransactionHeader::factory()->create(); // Membuat transaksi untuk diuji
+
+        $response = $this->actingAs($user)->delete(route('transactions.destroy', $transaction->id));
+
+        $response->assertStatus(302); // Status redirect setelah penghapusan
+        $response->assertRedirect(route('transactions.index'));
+
+        // Memastikan data sudah dihapus dari database
+        $this->assertDatabaseMissing('transaction_headers', [
+            'id' => $transaction->id, // Menggunakan ID untuk memverifikasi penghapusan
         ]);
     }
 }

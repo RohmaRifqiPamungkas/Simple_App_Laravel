@@ -21,11 +21,19 @@
                     </div>
 
                     <div class="flex gap-4 mb-4">
-                        <input type="text" class="form-input rounded-md shadow-sm w-full"
-                            placeholder="Search name...">
-                        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded">Category</button>
-                        <input type="date" class="form-input rounded-md shadow-sm w-full">
-                        <input type="date" class="form-input rounded-md shadow-sm w-full">
+                        <form action="{{ route('transactions.index') }}" method="GET" class="flex gap-4 mb-4">
+                            <input type="search" name="search" id="search"
+                                class="form-input rounded-md shadow-sm w-full" value="{{ request('search') }}"
+                                placeholder="Search description or code...">
+                            <button type="submit" class="px-4 py-2 bg-gray-200 text-gray-700 rounded">Search</button>
+                            <input type="date" class="form-input rounded-md shadow-sm w-full">
+                            <input type="date" class="form-input rounded-md shadow-sm w-full">
+                            <select name="transaction_type" id="transaction_type" class="form-select rounded-md shadow-sm">
+                                <option value="">Select Type</option>
+                                <option value="income" {{ request('transaction_type') === 'income' ? 'selected' : '' }}>Income</option>
+                                <option value="expense" {{ request('transaction_type') === 'expense' ? 'selected' : '' }}>Expense</option>
+                            </select>
+                        </form>
                     </div>
 
                     <div class="bg-white shadow-md rounded overflow-x-auto">
@@ -46,12 +54,16 @@
                             <tbody class="text-gray-600 text-sm font-light">
                                 @foreach ($transactions as $index => $transaction)
                                     <tr class="border-b border-gray-200 hover:bg-gray-100">
-                                        <td class="py-3 px-6 text-left whitespace-nowrap">{{ $index + 1 }}</td>
+                                        <!-- Menampilkan nomor urut yang melanjutkan dari halaman sebelumnya -->
+                                        <td class="py-3 px-6 text-left whitespace-nowrap">
+                                            {{ $loop->iteration + $transactions->perPage() * ($transactions->currentPage() - 1) }}
+                                        </td>
                                         <td class="py-3 px-6 text-left">{{ $transaction->description }}</td>
                                         <td class="py-3 px-6 text-left">{{ $transaction->code }}</td>
                                         <td class="py-3 px-6 text-left">{{ $transaction->rate_euro }}</td>
                                         <td class="py-3 px-6 text-left">
-                                            {{ \Carbon\Carbon::parse($transaction->date_paid)->format('d M Y') }}</td>
+                                            {{ \Carbon\Carbon::parse($transaction->date_paid)->format('d M Y') }}
+                                        </td>
 
                                         <!-- Menampilkan Kategori dari Detail -->
                                         <td class="py-3 px-6">
@@ -71,7 +83,8 @@
                                         @if ($transaction->details->isNotEmpty())
                                             <td class="py-3 px-6">{{ $transaction->details[0]->name }}</td>
                                             <td class="py-3 px-6">
-                                                Rp{{ number_format($transaction->details[0]->value_idr, 2) }}</td>
+                                                Rp{{ number_format($transaction->details[0]->value_idr, 2) }}
+                                            </td>
                                         @else
                                             <td class="py-3 px-6">-</td>
                                             <td class="py-3 px-6">-</td>
@@ -93,8 +106,7 @@
                                                     <a href="{{ route('transactions.edit', $transaction->id) }}"
                                                         class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Edit</a>
                                                     <form
-                                                        action="{{ route('transactions.destroy', $transaction->id) }}"
-                                                        method="POST">
+                                                        action="{{ route('transactions.destroy', $transaction->id) }}" method="POST">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button
@@ -108,24 +120,41 @@
                                 @endforeach
                             </tbody>
                         </table>
-
                     </div>
 
                     <div class="mt-4">
-                        <p>{{ $transactions->count() }} row(s) selected.</p>
+                        <p>{{ $transactions->total() }} row(s) selected.</p>
                     </div>
 
-                    <div class="flex justify-between mt-4">
-                        <select class="form-select rounded-md shadow-sm">
-                            <option>10</option>
-                            <option>20</option>
-                            <option>50</option>
+                    {{-- Form untuk pemilihan jumlah data per halaman --}}
+                    <form method="GET" action="{{ route('transactions.index') }}" class="flex justify-between mt-4">
+                        {{-- Dropdown untuk memilih jumlah data per halaman --}}
+                        <select name="perPage" class="form-select rounded-md shadow-sm" onchange="this.form.submit()">
+                            <option value="10" {{ request('perPage') == 10 ? 'selected' : '' }}>10</option>
+                            <option value="20" {{ request('perPage') == 20 ? 'selected' : '' }}>20</option>
+                            <option value="50" {{ request('perPage') == 50 ? 'selected' : '' }}>50</option>
                         </select>
-                        <div>
-                            <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded">Previous</button>
-                            <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded">Next</button>
+
+                        {{-- Navigasi halaman --}}
+                        <div class="flex items-center">
+                            {{-- Tombol Previous --}}
+                            @if ($transactions->onFirstPage())
+                                <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded" disabled>Previous</button>
+                            @else
+                                <a href="{{ $transactions->appends(['perPage' => request('perPage'), 'search' => request('search')])->previousPageUrl() }}"
+                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded">Previous</a>
+                            @endif
+
+                            {{-- Tombol Next --}}
+                            @if ($transactions->hasMorePages())
+                                <a href="{{ $transactions->appends(['perPage' => request('perPage'), 'search' => request('search')])->nextPageUrl() }}"
+                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded ml-2">Next</a>
+                            @else
+                                <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded ml-2" disabled>Next</button>
+                            @endif
                         </div>
-                    </div>
+                    </form>
+
                 </div>
             </div>
         </div>

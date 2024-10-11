@@ -9,85 +9,121 @@ use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Mendapatkan semua transaksi dengan detailnya
-        $transactions = TransactionHeader::with('details.category')->get();
-        return view('transactions.index', compact('transactions'));
+        $query = TransactionHeader::with('details.category');
+
+        $search = $request->input('search');
+
+        $perPage = $request->input('perPage', 10);
+
+        if ($search) {
+            // Menambahkan kondisi pencarian berdasarkan description atau code dari TransactionHeader
+            $query->where('description', 'like', "%{$search}%")
+                ->orWhere('code', 'like', "%{$search}%")
+                ->orWhereHas('details', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+        }
+
+        $query->orderBy('id', 'asc');
+
+        // Ambil data transaksi dengan pagination berdasarkan jumlah item per halaman yang dipilih
+        $transactions = $query->paginate($perPage);
+
+        // Kirimkan data ke view dengan variabel 'transactions' dan 'search'
+        return view('transactions.index', compact('transactions', 'search', 'perPage'));
     }
+
     public function create()
     {
         // Ambil semua kategori untuk digunakan dalam form
         $categories = MsCategory::all();
 
-        // Menampilkan form untuk membuat transaksi baru
         return view('transactions.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
-        // Validasi data yang diterima
+        // dd($request->all());
+        // Validasi data yang diterima dari request
         $request->validate([
-            'code' => 'required',
-            'description' => 'nullable|string',
-            'rate' => 'required|numeric',
-            'date_paid' => 'nullable|date',
+            'description' => 'required|string|max:255',
+            'code' => 'required|string|max:50',
+            'rate_euro' => 'required|numeric',
+            'date_paid' => 'required|date',
             'details' => 'required|array',
-            'details.*.name' => 'required|string',
+            'details.*.category' => 'required|integer|exists:ms_categories,id',
+            'details.*.name' => 'required|string|max:255',
             'details.*.amount' => 'required|numeric',
         ]);
 
-        // Membuat atau mendapatkan kategori
-        $categoryName = $request->input('category');
-        $category = MsCategory::firstOrCreate(['name' => $categoryName]);
+        // Membuat transaksi baru di tabel transaction_header
+        $transaction = TransactionHeader::create([
+            'code' => $request->input('code'),
+            'description' => $request->input('description'),
+            'rate_euro' => $request->input('rate_euro'),
+            'date_paid' => $request->input('date_paid')
+        ]);
 
-        // Membuat transaksi baru
-        $transaction = TransactionHeader::create($request->only(['code', 'description', 'rate', 'date_paid']));
+        // Memastikan transaksi baru dibuat sebelum lanjut ke proses detail
+        if ($transaction) {
+            foreach ($request->details as $detail) {
+                $transaction->details()->create([
+                    'transaction_id' => $transaction->id,
+                    'transaction_category_id' => $detail['category'],
+                    'name' => $detail['name'],
+                    'value_idr' => $detail['amount'],
+                ]);
+            }
 
-        // Menyimpan detail transaksi
-        foreach ($request->details as $detail) {
-            $transaction->details()->create([
-                'transaction_category_id' => $category->id,
-                'name' => $detail['name'],
-                'value_idr' => $detail['amount'],
-            ]);
+            return redirect()->route('transactions.index')->with('success', 'Transaction created successfully.');
         }
 
-        return redirect()->route('transactions.index')->with('success', 'Transaction created successfully.');
+        return redirect()->route('transactions.index')->with('error', 'Failed to create transaction.');
     }
 
     public function edit(TransactionHeader $transaction)
     {
+        // Ambil kategori untuk di dropdown
+        $categories = MsCategory::all();
+
         // Menampilkan form untuk mengedit transaksi
-        return view('transactions.edit', compact('transaction'));
+        return view('transactions.edit', compact('transaction', 'categories'));
     }
 
     public function update(Request $request, TransactionHeader $transaction)
     {
         // Validasi data yang diterima
         $request->validate([
-            'code' => 'required',
+            'code' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'rate' => 'required|numeric',
-            'date_paid' => 'nullable|date',
-            'category' => 'required|string|in:Income,Expense',
+            'rate_euro' => 'required|numeric',
+            'date_paid' => 'nullable|date', // Pastikan ini nullable jika tidak selalu diisi
             'details' => 'required|array',
+            'details.*.category' => 'required|integer|exists:ms_categories,id',
             'details.*.name' => 'required|string',
             'details.*.amount' => 'required|numeric',
         ]);
 
-        // Membuat atau mendapatkan kategori (tambahkan ini)
-        $categoryName = $request->input('category');
-        $category = MsCategory::firstOrCreate(['name' => $categoryName]);
+        // Ambil nilai date_paid, jika tidak ada, gunakan nilai transaksi yang ada
+        $datePaid = $request->input('date_paid') ?? $transaction->date_paid;
 
-        // Memperbarui transaksi
-        $transaction->update($request->only(['code', 'description', 'rate', 'date_paid']));
+        // Perbarui informasi transaksi
+        $transaction->update([
+            'code' => $request->code,
+            'description' => $request->description,
+            'rate_euro' => $request->rate_euro,
+            'date_paid' => $datePaid,
+        ]);
 
-        // Hapus detail lama dan tambahkan detail yang baru
+        // Hapus detail lama
         $transaction->details()->delete();
+
+        // Tambahkan detail yang baru
         foreach ($request->details as $detail) {
             $transaction->details()->create([
-                'transaction_category_id' => $category->id,
+                'transaction_category_id' => $detail['category'],
                 'name' => $detail['name'],
                 'value_idr' => $detail['amount'],
             ]);
@@ -96,10 +132,13 @@ class TransactionController extends Controller
         return redirect()->route('transactions.index')->with('success', 'Transaction updated successfully.');
     }
 
+
     public function destroy(TransactionHeader $transaction)
     {
-        // Hapus transaksi
+        // Hapus transaksi beserta detailnya
+        $transaction->details()->delete();
         $transaction->delete();
+
         return redirect()->route('transactions.index')->with('success', 'Transaction deleted successfully.');
     }
 

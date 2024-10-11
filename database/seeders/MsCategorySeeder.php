@@ -2,15 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\MsCategory;
+use Illuminate\Support\Facades\DB;
 
 class MsCategorySeeder extends Seeder
 {
     public function run()
     {
-        MsCategory::firstOrCreate(['name' => 'Income']);
-        MsCategory::firstOrCreate(['name' => 'Expense']);
+        DB::table('ms_categories')->insert([
+            ['name' => 'Expense'],
+            ['name' => 'Income'],
+        ]);
     }
 }
