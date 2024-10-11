@@ -74,17 +74,14 @@
                                                     </span>
                                                 @endforeach
                                             @else
-                                                <span class="px-3 py-1 text-xs text-white bg-gray-500 rounded-full">No
-                                                    Category</span>
+                                                <span class="px-3 py-1 text-xs text-white bg-gray-500 rounded-full">No Category</span>
                                             @endif
                                         </td>
 
                                         <!-- Nama Transaksi dan Nominal -->
                                         @if ($transaction->details->isNotEmpty())
                                             <td class="py-3 px-6">{{ $transaction->details[0]->name }}</td>
-                                            <td class="py-3 px-6">
-                                                Rp{{ number_format($transaction->details[0]->value_idr, 2) }}
-                                            </td>
+                                            <td class="py-3 px-6">Rp{{ number_format($transaction->details[0]->value_idr, 2) }}</td>
                                         @else
                                             <td class="py-3 px-6">-</td>
                                             <td class="py-3 px-6">-</td>

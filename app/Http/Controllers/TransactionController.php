@@ -18,7 +18,6 @@ class TransactionController extends Controller
         $perPage = $request->input('perPage', 10);
 
         if ($search) {
-            // Menambahkan kondisi pencarian berdasarkan description atau code dari TransactionHeader
             $query->where('description', 'like', "%{$search}%")
                 ->orWhere('code', 'like', "%{$search}%")
                 ->orWhereHas('details', function ($q) use ($search) {
@@ -27,8 +26,6 @@ class TransactionController extends Controller
         }
 
         $query->orderBy('id', 'asc');
-
-        // Ambil data transaksi dengan pagination berdasarkan jumlah item per halaman yang dipilih
         $transactions = $query->paginate($perPage);
 
         // Kirimkan data ke view dengan variabel 'transactions' dan 'search'
@@ -37,7 +34,6 @@ class TransactionController extends Controller
 
     public function create()
     {
-        // Ambil semua kategori untuk digunakan dalam form
         $categories = MsCategory::all();
 
         return view('transactions.create', compact('categories'));
@@ -46,34 +42,33 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         // dd($request->all());
-        // Validasi data yang diterima dari request
         $request->validate([
-            'description' => 'required|string|max:255',
-            'code' => 'required|string|max:50',
-            'rate_euro' => 'required|numeric',
-            'date_paid' => 'required|date',
-            'details' => 'required|array',
+            'description'        => 'required|string|max:255',
+            'code'               => 'required|string|max:50',
+            'rate_euro'          => 'required|numeric',
+            'date_paid'          => 'required|date',
+            'details'            => 'required|array',
             'details.*.category' => 'required|integer|exists:ms_categories,id',
-            'details.*.name' => 'required|string|max:255',
-            'details.*.amount' => 'required|numeric',
+            'details.*.name'     => 'required|string|max:255',
+            'details.*.amount'   => 'required|numeric',
         ]);
-
+        
         // Membuat transaksi baru di tabel transaction_header
         $transaction = TransactionHeader::create([
-            'code' => $request->input('code'),
+            'code'        => $request->input('code'),
             'description' => $request->input('description'),
-            'rate_euro' => $request->input('rate_euro'),
-            'date_paid' => $request->input('date_paid')
+            'rate_euro'   => $request->input('rate_euro'),
+            'date_paid'   => $request->input('date_paid')
         ]);
-
+        
         // Memastikan transaksi baru dibuat sebelum lanjut ke proses detail
         if ($transaction) {
             foreach ($request->details as $detail) {
                 $transaction->details()->create([
-                    'transaction_id' => $transaction->id,
+                    'transaction_id'          => $transaction->id,
                     'transaction_category_id' => $detail['category'],
-                    'name' => $detail['name'],
-                    'value_idr' => $detail['amount'],
+                    'name'                    => $detail['name'],
+                    'value_idr'               => $detail['amount'],
                 ]);
             }
 
@@ -99,7 +94,7 @@ class TransactionController extends Controller
             'code' => 'required|string|max:255',
             'description' => 'nullable|string',
             'rate_euro' => 'required|numeric',
-            'date_paid' => 'nullable|date', // Pastikan ini nullable jika tidak selalu diisi
+            'date_paid' => 'nullable|date',
             'details' => 'required|array',
             'details.*.category' => 'required|integer|exists:ms_categories,id',
             'details.*.name' => 'required|string',
@@ -131,7 +126,6 @@ class TransactionController extends Controller
 
         return redirect()->route('transactions.index')->with('success', 'Transaction updated successfully.');
     }
-
 
     public function destroy(TransactionHeader $transaction)
     {

@@ -10,44 +10,49 @@
             <div class="bg-white shadow-xl sm:rounded-lg p-6">
                 <form id="transaction-form" action="{{ route('transactions.store') }}" method="POST">
                     @csrf
-
+    
                     <!-- Header Transaksi -->
                     <div class="grid grid-cols-2 gap-6 mb-6">
-                        <div>
+                        <div class="flex flex-col">
                             <label class="block text-gray-700" for="description">Deskripsi</label>
-                            <textarea id="description" name="description" class="form-input rounded-md shadow-sm mt-1 block w-full"
+                            <textarea id="description" name="description"
+                                class="form-input rounded-md shadow-sm mt-1 block w-full flex-grow"
                                 placeholder="Transaksi Bulan Agustus"></textarea>
                         </div>
-                        <div>
-                            <label class="block text-gray-700" for="code">Kode</label>
-                            <input id="code" name="code" type="text"
-                                class="form-input rounded-md shadow-sm mt-1 block w-full" placeholder="123456">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700" for="rate">Rate Euro</label>
-                            <input id="rate" name="rate_euro" type="number" step="0.01"
-                                class="form-input rounded-md shadow-sm mt-1 block w-full" placeholder="15.000">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700" for="date_paid">Tanggal Bayar</label>
-                            <input id="date_paid" name="date_paid" type="date"
-                                class="form-input rounded-md shadow-sm mt-1 block w-full">
+                        <div class="flex flex-col space-y-4">
+                            <div>
+                                <label class="block text-gray-700" for="code">Kode</label>
+                                <input id="code" name="code" type="text"
+                                    class="form-input rounded-md shadow-sm mt-1 block w-full" placeholder="123456">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700" for="rate">Rate Euro</label>
+                                <input id="rate" name="rate_euro" type="number" step="0.01"
+                                    class="form-input rounded-md shadow-sm mt-1 block w-full" placeholder="15.000">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700" for="date_paid">Tanggal Bayar</label>
+                                <input id="date_paid" name="date_paid" type="date"
+                                    class="form-input rounded-md shadow-sm mt-1 block w-full">
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Detail Transaksi -->
-                    <div id="details-container">
+
+                     <!-- Detail Transaksi -->
+                     <div id="details-container">
                         <div class="mb-4 close p-4 border rounded-lg detail-template" style="display: none;">
                             <div class="flex justify-between items-center mb-4">
                                 <label class="block text-gray-700">Kategori</label>
                                 <button type="button" class="remove-category text-red-600">✖</button>
                             </div>
-                            <select name="details[0][category]" class="form-select rounded-md shadow-sm block w-full mb-4 category-select">>
-                                @foreach($categories as $category)
+                            <select name="details[0][category]"
+                                class="form-select rounded-md shadow-sm block w-full mb-4 category-select">>
+                                @foreach ($categories as $category)
                                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                                 @endforeach
                             </select>
-                            
+
                             <div class="grid grid-cols-4 gap-4 items-center mb-2">
                                 <label class="block text-gray-700 col-span-2">Nama Transaksi</label>
                                 <label class="block text-gray-700 col-span-2">Nominal (IDR)</label>
@@ -66,15 +71,17 @@
                             class="add-category bg-blue-500 text-white px-4 py-2 rounded-md mt-4">Tambah
                             Kategori</button>
                     </div>
-
+    
+                    <!-- Pratinjau dan Total -->
                     <div id="preview-list" class="mt-8 mb-4 p-4 border rounded-lg">
                         <h4 class="text-lg font-medium">Pratinjau Transaksi Ditambahkan</h4>
                     </div>
-
+    
                     <div class="mt-4 p-4 border rounded-lg">
                         <h4 class="text-lg font-medium">Total: IDR <span id="total-amount">0.00</span></h4>
                     </div>
-
+    
+                    <!-- Tombol Simpan dan Batal -->
                     <div class="mt-6 flex justify-end">
                         <button type="reset" class="bg-red-600 text-white px-4 py-2 rounded-md">Batal</button>
                         <button type="submit" class="ml-4 bg-blue-600 text-white px-4 py-2 rounded-md">Simpan</button>
@@ -82,14 +89,14 @@
                 </form>
             </div>
         </div>
-    </div>
+    </div>    
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const detailsContainer = document.getElementById('details-container');
             const detailTemplate = document.querySelector('.detail-template');
             const previewList = document.getElementById('preview-list');
-            let detailIndex = 1; // Indeks untuk detail yang baru
+            let detailIndex = 1; 
 
             // Tambahkan detail baru saat tombol "Tambah Kategori" ditekan
             document.querySelector('.add-category').addEventListener('click', function() {
@@ -119,8 +126,8 @@
                     // Ambil elemen detail yang tepat untuk dihapus
                     const detail = event.target.closest('.close');
                     if (detail) {
-                        detail.remove(); // Hapus elemen detail dari DOM
-                        updateTotal(); // Update total saat detail dihapus
+                        detail.remove();
+                        updateTotal();
                     }
                 }
 
@@ -139,10 +146,9 @@
                     <button type="button" class="delete-preview-item text-red-600">✖</button>`;
                         previewList.appendChild(previewItem);
 
-                        // Kosongkan input setelah menambahkan pratinjau
                         nameInput.value = '';
                         amountInput.value = '';
-                        updateTotal(); // Update total saat transaksi ditambahkan
+                        updateTotal();
                     } else {
                         alert('Pastikan Nama Transaksi dan Nominal telah terisi dengan benar.');
                     }
@@ -154,7 +160,7 @@
                 if (event.target.classList.contains('delete-preview-item')) {
                     const previewItem = event.target.closest('.preview-item');
                     previewItem.remove();
-                    updateTotal(); // Update total saat item pratinjau dihapus
+                    updateTotal();
                 }
             });
 
